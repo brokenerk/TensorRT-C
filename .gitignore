@@ -1,6 +1,7 @@
 *.out
 *.o
-/c++/bin/
-/c++/bin/*
 *.mp4
 *.pb
+*.uff
+*.bin
+*.data-00000-of-00001

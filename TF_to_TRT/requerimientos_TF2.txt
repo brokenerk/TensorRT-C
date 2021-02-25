@@ -1,0 +1,12 @@
+class DNN_model(tf.Module):
+
+self.trainableVar
+
+@tf.function    
+def __call__(self,x):
+
+tf.saved_model.save(DNN, saved_model_path, signatures=DNN.__call__.get_concrete_function(tf.TensorSpec(shape=INPUT_SHAPE, dtype=tf.float32)))
+
+Sin capas dropout
+
+Convertir a frozen grahp de TF1
