@@ -1,7 +1,14 @@
 *.out
 *.o
 *.mp4
-*.pb
-*.uff
-*.bin
 *.data-00000-of-00001
+PublicidadBT/bin
+TRT_samples/bin
+TRT_samples/data
+PublicidadBT/src/BigFive/cnn4_train_2.uff
+TF_to_TRT/BigFive/cnn_model.uff
+TF_to_TRT/BigFive/frozen_graph.pb
+TF_to_TRT/BigFive/TRT_cnn_model.bin
+TF_to_TRT/ComidaMex/cnn_model.uff
+TF_to_TRT/ComidaMex/frozen_graph.pb
+TF_to_TRT/ComidaMex/TRT_cnn_model.bin
