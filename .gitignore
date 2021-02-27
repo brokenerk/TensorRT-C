@@ -4,7 +4,6 @@
 *.data-00000-of-00001
 PublicidadBT/bin
 TRT_samples/bin
-TRT_samples/data
 PublicidadBT/src/BigFive/cnn4_train_2.uff
 TF_to_TRT/BigFive/cnn_model.uff
 TF_to_TRT/BigFive/frozen_graph.pb
