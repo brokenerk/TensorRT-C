@@ -265,7 +265,7 @@ public:
     //!
     //! \brief Create a BufferManager for handling buffer interactions with engine.
     //!
-    BufferManager(std::shared_ptr<nvinfer1::ICudaEngine> engine, const int& batchSize, const nvinfer1::IExecutionContext* context = nullptr)
+    BufferManager(ICudaEngine* engine, const int& batchSize, const nvinfer1::IExecutionContext* context = nullptr)
         : mEngine(engine)
         , mBatchSize(batchSize)
     {
@@ -437,7 +437,7 @@ private:
         }
     }
 
-    std::shared_ptr<nvinfer1::ICudaEngine> mEngine;              //!< The pointer to the engine
+    ICudaEngine* mEngine;              //!< The pointer to the engine
     int mBatchSize;                                              //!< The batch size
     std::vector<std::unique_ptr<ManagedBuffer>> mManagedBuffers; //!< The vector of pointers to managed buffers
     std::vector<void*> mDeviceBindings;                          //!< The vector of device buffers needed for engine execution
