@@ -1,9 +1,9 @@
-#include "CnnBig5.h"
+#include "CnnEG.h"
 
-CnnBig5::CnnBig5() {
+CnnEG::CnnEG() {
     // Variables del modelo
-    string model_TRTbin = "./../bin/models/BigFive/TRT_cnn4_train_2.bin";
-    string __PATH_UFF_SAVED_MODEL = "./../bin/models/BigFive/cnn4_train_2.uff";
+    string model_TRTbin = "./../bin/models/EG/TRT_cnn_EG.bin";
+    string __PATH_UFF_SAVED_MODEL = "./../bin/models/EG/cnn_EG.uff";
 
     // Check if BIN exists
     struct stat s;
@@ -15,10 +15,11 @@ CnnBig5::CnnBig5() {
         nvuffparser::IUffParser* parser = nvuffparser::createUffParser();
 
         // Parse UFF model
-        parser->registerInput("input_4",
+        parser->registerInput("input",
                               nvinfer1::Dims3(__model_dims[0], __model_dims[1], __model_dims[2]),
                               nvuffparser::UffInputOrder::kNCHW);
-        parser->registerOutput("dense_12/BiasAdd");
+        parser->registerOutput("Identity");
+        parser->registerOutput("Identity_1");
         parser->parse(__PATH_UFF_SAVED_MODEL.c_str(), *network, nvinfer1::DataType::kFLOAT);
 
         // Set config
@@ -55,13 +56,13 @@ CnnBig5::CnnBig5() {
     buffers = new samplesCommon::BufferManager(engine, 1);
 }
 
-void CnnBig5::obtenerPersonalidad(cv::Mat rostro, float* big5) {
+void CnnEG::obtenerEG(cv::Mat rostro, float* e_g) {
     const int inputC = __model_dims[0];
     const int inputH = __model_dims[1];
     const int inputW = __model_dims[2];
     const int batchSize = 1;
 
-    float* hostDataBuffer = static_cast<float*>(buffers->getHostBuffer("input_4"));
+    float* hostDataBuffer = static_cast<float*>(buffers->getHostBuffer("input"));
     // Normalize image
     for (int i = 0, volImg = inputC * inputH * inputW; i < batchSize; ++i) {
         for (int c = 0; c < inputC; ++c) {
@@ -78,12 +79,24 @@ void CnnBig5::obtenerPersonalidad(cv::Mat rostro, float* big5) {
     buffers->copyOutputToHost();
 
     // Post-process detections and verify results
-    const float* detection = static_cast<const float*>(buffers->getHostBuffer("dense_12/BiasAdd"));
-    const float* big5_aux = &detection[0];
-    big5[0] = big5_aux[0];
-    big5[1] = big5_aux[1];
-    big5[2] = big5_aux[2];
-    big5[3] = big5_aux[3];
-    big5[4] = big5_aux[4];
+    const float* detectionAge = static_cast<const float*>(buffers->getHostBuffer("Identity"));
+    const float* detectionGenre = static_cast<const float*>(buffers->getHostBuffer("Identity_1"));
+
+    const float* g = &detectionGenre[0];
+    const float* edad = &detectionAge[0];
+
+    /* Funcion escalon para genero
+       Revisar solo la primera posicion
+       [1 0] Mujer -> 0
+       [0 1] Hombre -> 1
+    */
+    int genero;
+    if(g[0] > 0)
+        genero = 0; //MUJER
+    else
+        genero = 1; //HOMBRE
+
+    e_g[0] = (float)edad[0];
+    e_g[1] = (float)genero;
     nvuffparser::shutdownProtobufLibrary();
 }

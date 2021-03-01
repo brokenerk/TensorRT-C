@@ -108,9 +108,9 @@ vector<cv::Mat> DetectorRostros::detectarRostros(cv::Mat image) {
             //cv::rectangle(image, cv::Point2f(xmin, ymin), cv::Point2f(xmax, ymax), cv::Scalar(0, 255, 0), 5);
 
             // border: lista con coordenadas del rostro en formato (yMin, xMin, yMax, xmax)
-            float border[4] = {ymin, xmin, ymax, xmax};
-            float ancho = border[3] - border[1];
-            float alto = border[2] - border[0];
+            int border[4] = {(int)ymin, (int)xmin, (int)ymax, (int)xmax};
+            int ancho = border[3] - border[1];
+            int alto = border[2] - border[0];
 
             /*
                 Dado a que se nesecita un formato selfie en la red EG y big5 se agrega a la imagen:
@@ -128,23 +128,22 @@ vector<cv::Mat> DetectorRostros::detectarRostros(cv::Mat image) {
             float bottomMargin = alto * 0.4;
 
             // Para yMin (boder[0]) para formato selfie
-            border[0] = ((border[0]-topMargin) > 0) ? border[0]-topMargin : 0;
+            border[0] = ((border[0]-topMargin) > 0) ? (int)(border[0]-topMargin) : 0;
 
             // Para xMin (boder[1]) para formato selfie
-            border[1] = ((border[1]-sidesMargins) > 0) ? border[1]-sidesMargins : 0;
+            border[1] = ((border[1]-sidesMargins) > 0) ? (int)(border[1]-sidesMargins) : 0;
 
             // Para yMax (boder[2]) para formato selfie
-            border[2] = ((border[2]+bottomMargin) > 0) ? border[2]+bottomMargin : height;
+            border[2] = ((border[2]+bottomMargin) < height) ? (int)(border[2]+bottomMargin) : height;
 
             // Para xMax (boder[3]) para formato selfie
-            border[3] = ((border[3]+sidesMargins) > 0) ? border[3]+sidesMargins : width;
+            border[3] = ((border[3]+sidesMargins) < width) ? (int)(border[3]+sidesMargins) : width;
 
             // Tamanios de la selfie
-            float selfieHeight = border[2]-border[0];
-            float selfieWidth = border[3]-border[1];
+            int selfieHeight = border[2]-border[0];
+            int selfieWidth = border[3]-border[1];
 
-            cv::Rect crop_face(xmin, ymin, ancho, alto);
-            cv::Mat imageP=image(crop_face);
+            cv::Mat imageP = image(cv::Range(border[0], border[2]), cv::Range(border[1], border[3]));
 
             /*
                 Redimension de 208x208
@@ -156,9 +155,24 @@ vector<cv::Mat> DetectorRostros::detectarRostros(cv::Mat image) {
                 formato selfie reescalada sobre la imagen en negro (aux) respetando los margenes.
             */
             // Redimensiona 208x208
-            cv::Mat aux;
-            cv::resize(imageP, aux, cv::Size(208, 208));
+            cv::Mat aux = cv::Mat::zeros(208, 208, CV_8UC3);
+            cv::Mat selfieImage;
 
+            if (selfieHeight > selfieWidth) {
+                int newWidth = (int)(selfieWidth * 208 / selfieHeight);
+                cv::resize(imageP, selfieImage, cv::Size(newWidth, 208));
+                int margin = (int)((208-newWidth)/2);
+                selfieImage.copyTo(aux(cv::Range::all(), cv::Range(margin, margin+newWidth)));
+            }
+            else {
+                int newHeight = (int)(selfieHeight * 208 / selfieWidth);
+                cv::resize(imageP, selfieImage, cv::Size(208, newHeight));
+                int margin = (int)((208-newHeight)/2);
+                selfieImage.copyTo(aux(cv::Range(margin, margin+newHeight), cv::Range::all()));
+            }
+            // Normalizar
+            aux.convertTo(aux, CV_32FC1);
+            aux = aux / 255.0;
             __rostros.push_back(aux);
     
         }

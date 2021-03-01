@@ -13,15 +13,20 @@ CFLAGS=$(COMMON_FLAGS)
 COMMON_LD_FLAGS += $(LIBPATHS)
 LFLAGS=$(COMMON_LD_FLAGS)
 
-run: main.cpp VideoPredefinido.o DetectorRostros.o logger.o
-	g++ main.cpp VideoPredefinido.o DetectorRostros.o logger.o $(CFLAGS) $(LFLAGS) $(LIBS) $(OPENCV) -o main
-	rm -r *.o
+run: main.cpp VideoPredefinido.o DetectorRostros.o CnnEG.o CnnBig5.o logger.o
+	g++ main.cpp VideoPredefinido.o DetectorRostros.o CnnEG.o CnnBig5.o logger.o $(CFLAGS) $(LFLAGS) $(LIBS) $(OPENCV) -o main
 	
 VideoPredefinido.o: ./camera/VideoPredefinido.cpp
 	g++ ./camera/VideoPredefinido.cpp $(OPENCV) -c
 
 DetectorRostros.o: ./rna/DetectorRostros.cpp
 	g++ ./rna/DetectorRostros.cpp $(CFLAGS) $(LFLAGS) $(LIBS) $(OPENCV) -c
+
+CnnEG.o: ./rna/CnnEG.cpp
+	g++ ./rna/CnnEG.cpp $(CFLAGS) $(LFLAGS) $(LIBS) $(OPENCV) -c
+
+CnnBig5.o: ./rna/CnnBig5.cpp
+	g++ ./rna/CnnBig5.cpp $(CFLAGS) $(LFLAGS) $(LIBS) $(OPENCV) -c
 
 logger.o: ./util/logger.cpp
 	g++ ./util/logger.cpp $(CFLAGS) $(LFLAGS) $(LIBS) -c
