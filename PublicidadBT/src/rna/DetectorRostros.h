@@ -12,11 +12,12 @@
 #include <sys/stat.h>
 #include <vector>
 #include <opencv2/opencv.hpp>
+#include "./../persistencia/Rostro.h"
 using namespace std;
 class DetectorRostros {
 	public:
 	    DetectorRostros();
-	    vector<cv::Mat> detectarRostros(cv::Mat image);
+	    vector<Rostro> detectarRostros(cv::Mat image);
 	private:
 	    int __model_dims[3] = {3, 300, 300};
 	    int __model_layout = 7;

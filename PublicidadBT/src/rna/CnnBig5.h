@@ -2,7 +2,6 @@
 #define CNNBIG5_H_
 #include "./../util/buffers.h"
 #include "./../util/common.h"
-#include "./../util/logger.h"
 #include "NvInfer.h"
 #include "NvUffParser.h"
 #include <cuda_runtime_api.h>

@@ -5,7 +5,7 @@ DetectorRostros::DetectorRostros() {
     initLibNvInferPlugins(&gLogger.getTRTLogger(), "");
     // Variables del modelo
     string model_TRTbin = "./../bin/pretrained_model/TRT_ssd_mobilenet_v2.bin";
-    string __PATH_UFF_SAVED_MODEL = "./../bin/pretrained_model/cnn_SSD.uff";
+    string __PATH_UFF_SAVED_MODEL = "./../bin/pretrained_model/frozen_graph_inference.uff";
 
     // Check if BIN exists
     struct stat s;
@@ -18,7 +18,7 @@ DetectorRostros::DetectorRostros() {
 
 	    // Parse UFF model
 	    parser->registerInput("Input",
-	                          nvinfer1::Dims3(__model_dims[0], __model_dims[1], __model_dims[2]),
+	                          nvinfer1::Dims3(this->__model_dims[0], this->__model_dims[1], this->__model_dims[2]),
 	                          nvuffparser::UffInputOrder::kNCHW);
 	    parser->registerOutput("NMS");
 	    parser->parse(__PATH_UFF_SAVED_MODEL.c_str(), *network, nvinfer1::DataType::kFLOAT);
@@ -53,16 +53,16 @@ DetectorRostros::DetectorRostros() {
 	nvinfer1::ICudaEngine* engine = runtime->deserializeCudaEngine(buf.data(), size, nullptr);
 
 	// Create context and buffers
-	context = engine->createExecutionContext();
-	buffers = new samplesCommon::BufferManager(engine, 1);
+	this->context = engine->createExecutionContext();
+	this->buffers = new samplesCommon::BufferManager(engine, 1);
 }
 
-vector<cv::Mat> DetectorRostros::detectarRostros(cv::Mat image) {
-    vector<cv::Mat> __rostros;
+vector<Rostro> DetectorRostros::detectarRostros(cv::Mat image) {
+    vector<Rostro> __rostros;
     
-    const int inputC = __model_dims[0];
-    const int inputH = __model_dims[1];
-    const int inputW = __model_dims[2];
+    const int inputC = this->__model_dims[0];
+    const int inputH = this->__model_dims[1];
+    const int inputW = this->__model_dims[2];
     const int batchSize = 1;
 
     // Pre-process image for inference
@@ -70,7 +70,7 @@ vector<cv::Mat> DetectorRostros::detectarRostros(cv::Mat image) {
     cv::resize(image, input_image, cv::Size(inputH, inputW));
     cv::cvtColor(input_image, input_image, cv::COLOR_BGR2RGB);
 
-    float* hostDataBuffer = static_cast<float*>(buffers->getHostBuffer("Input"));
+    float* hostDataBuffer = static_cast<float*>(this->buffers->getHostBuffer("Input"));
     // Normalize image
     for (int i = 0, volImg = inputC * inputH * inputW; i < batchSize; ++i) {
         for (int c = 0; c < inputC; ++c) {
@@ -80,14 +80,14 @@ vector<cv::Mat> DetectorRostros::detectarRostros(cv::Mat image) {
     }
 
     // Memcpy from host input buffers to device input buffers
-    buffers->copyInputToDevice();
+    this->buffers->copyInputToDevice();
     // Run inference
-    context->execute(1, buffers->getDeviceBindings().data());
+    this->context->execute(1, this->buffers->getDeviceBindings().data());
     // Memcpy from device output buffers to host output buffers
-    buffers->copyOutputToHost();
+    this->buffers->copyOutputToHost();
 
     // Post-process detections and verify results
-    const float* detection = static_cast<const float*>(buffers->getHostBuffer("NMS"));
+    const float* detection = static_cast<const float*>(this->buffers->getHostBuffer("NMS"));
     const float* output = &detection[0];
     int width = image.cols;
     int height = image.rows;
@@ -96,7 +96,7 @@ vector<cv::Mat> DetectorRostros::detectarRostros(cv::Mat image) {
     // Check detections
     int i = 0;
     while(1) {
-        int prefix = i * __model_layout;
+        int prefix = i * this->__model_layout;
         float score = output[prefix+2];
 
         // Cuando score>= 0.6 se considera como cara
@@ -109,8 +109,11 @@ vector<cv::Mat> DetectorRostros::detectarRostros(cv::Mat image) {
 
             // border: lista con coordenadas del rostro en formato (yMin, xMin, yMax, xmax)
             int border[4] = {(int)ymin, (int)xmin, (int)ymax, (int)xmax};
-            int ancho = border[3] - border[1];
-            int alto = border[2] - border[0];
+            // Creacion de objeto Rostro
+            Rostro rostro;
+            rostro.setCoordenadas(border);
+            rostro.setAncho(border[3] - border[1]);
+            rostro.setAlto(border[2] - border[0]);
 
             /*
                 Dado a que se nesecita un formato selfie en la red EG y big5 se agrega a la imagen:
@@ -123,9 +126,9 @@ vector<cv::Mat> DetectorRostros::detectarRostros(cv::Mat image) {
                 bottomMargin: tamanio que se agrega abajo del rostro (40% del alto del rostro).
                 Las coordenadas se quedan tal cual para ocuparlos en el modulo de AR.
             */
-            float sidesMargins = ancho * 0.1;
-            float topMargin = alto * 0.1;
-            float bottomMargin = alto * 0.4;
+            float sidesMargins = rostro.getAncho() * 0.1;
+            float topMargin = rostro.getAlto() * 0.1;
+            float bottomMargin = rostro.getAlto() * 0.4;
 
             // Para yMin (boder[0]) para formato selfie
             border[0] = ((border[0]-topMargin) > 0) ? (int)(border[0]-topMargin) : 0;
@@ -173,7 +176,8 @@ vector<cv::Mat> DetectorRostros::detectarRostros(cv::Mat image) {
             // Normalizar
             aux.convertTo(aux, CV_32FC1);
             aux = aux / 255.0;
-            __rostros.push_back(aux);
+            rostro.setImg(aux);
+            __rostros.push_back(rostro);
     
         }
         else

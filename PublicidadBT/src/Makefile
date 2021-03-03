@@ -13,23 +13,29 @@ CFLAGS=$(COMMON_FLAGS)
 COMMON_LD_FLAGS += $(LIBPATHS)
 LFLAGS=$(COMMON_LD_FLAGS)
 
-run: main.cpp VideoPredefinido.o DetectorRostros.o CnnEG.o CnnBig5.o logger.o
-	g++ main.cpp VideoPredefinido.o DetectorRostros.o CnnEG.o CnnBig5.o logger.o $(CFLAGS) $(LFLAGS) $(LIBS) $(OPENCV) -o main
-	
-VideoPredefinido.o: ./camera/VideoPredefinido.cpp
-	g++ ./camera/VideoPredefinido.cpp $(OPENCV) -c
+run: main.cpp Visor.o Camara.o DetectorRostros.o CnnEG.o CnnBig5.o Rostro.o logger.o
+	g++ main.cpp Visor.o Camara.o DetectorRostros.o CnnEG.o CnnBig5.o Rostro.o logger.o $(CFLAGS) $(LFLAGS) $(LIBS) $(OPENCV) -w -o main
+
+Visor.o: ./util/Visor.cpp
+	g++ ./util/Visor.cpp $(CFLAGS) $(LFLAGS) $(LIBS) $(OPENCV) -w -c
+
+Camara.o: ./camara/Camara.cpp
+	g++ ./camara/Camara.cpp $(OPENCV) -w -c
 
 DetectorRostros.o: ./rna/DetectorRostros.cpp
-	g++ ./rna/DetectorRostros.cpp $(CFLAGS) $(LFLAGS) $(LIBS) $(OPENCV) -c
+	g++ ./rna/DetectorRostros.cpp $(CFLAGS) $(LFLAGS) $(LIBS) $(OPENCV) -w -c
 
 CnnEG.o: ./rna/CnnEG.cpp
-	g++ ./rna/CnnEG.cpp $(CFLAGS) $(LFLAGS) $(LIBS) $(OPENCV) -c
+	g++ ./rna/CnnEG.cpp $(CFLAGS) $(LFLAGS) $(LIBS) $(OPENCV) -w -c
 
 CnnBig5.o: ./rna/CnnBig5.cpp
-	g++ ./rna/CnnBig5.cpp $(CFLAGS) $(LFLAGS) $(LIBS) $(OPENCV) -c
+	g++ ./rna/CnnBig5.cpp $(CFLAGS) $(LFLAGS) $(LIBS) $(OPENCV) -w -c
+
+Rostro.o: ./persistencia/Rostro.cpp
+	g++ ./persistencia/Rostro.cpp $(OPENCV) -w -c
 
 logger.o: ./util/logger.cpp
-	g++ ./util/logger.cpp $(CFLAGS) $(LFLAGS) $(LIBS) -c
+	g++ ./util/logger.cpp $(CFLAGS) $(LFLAGS) $(LIBS) -w -c
 
 clean:
 	rm -r *.o

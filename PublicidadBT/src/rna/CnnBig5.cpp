@@ -16,7 +16,7 @@ CnnBig5::CnnBig5() {
 
         // Parse UFF model
         parser->registerInput("input_4",
-                              nvinfer1::Dims3(__model_dims[0], __model_dims[1], __model_dims[2]),
+                              nvinfer1::Dims3(this->__model_dims[0], this->__model_dims[1], this->__model_dims[2]),
                               nvuffparser::UffInputOrder::kNCHW);
         parser->registerOutput("dense_12/BiasAdd");
         parser->parse(__PATH_UFF_SAVED_MODEL.c_str(), *network, nvinfer1::DataType::kFLOAT);
@@ -51,17 +51,17 @@ CnnBig5::CnnBig5() {
     nvinfer1::ICudaEngine* engine = runtime->deserializeCudaEngine(buf.data(), size, nullptr);
 
     // Create context and buffers
-    context = engine->createExecutionContext();
-    buffers = new samplesCommon::BufferManager(engine, 1);
+    this->context = engine->createExecutionContext();
+    this->buffers = new samplesCommon::BufferManager(engine, 1);
 }
 
 void CnnBig5::obtenerPersonalidad(cv::Mat rostro, float* big5) {
-    const int inputC = __model_dims[0];
-    const int inputH = __model_dims[1];
-    const int inputW = __model_dims[2];
+    const int inputC = this->__model_dims[0];
+    const int inputH = this->__model_dims[1];
+    const int inputW = this->__model_dims[2];
     const int batchSize = 1;
 
-    float* hostDataBuffer = static_cast<float*>(buffers->getHostBuffer("input_4"));
+    float* hostDataBuffer = static_cast<float*>(this->buffers->getHostBuffer("input_4"));
     // Normalize image
     for (int i = 0, volImg = inputC * inputH * inputW; i < batchSize; ++i) {
         for (int c = 0; c < inputC; ++c) {
@@ -71,14 +71,14 @@ void CnnBig5::obtenerPersonalidad(cv::Mat rostro, float* big5) {
     }
 
     // Memcpy from host input buffers to device input buffers
-    buffers->copyInputToDevice();
+    this->buffers->copyInputToDevice();
     // Run inference
-    context->execute(1, buffers->getDeviceBindings().data());
+    this->context->execute(1, buffers->getDeviceBindings().data());
     // Memcpy from device output buffers to host output buffers
-    buffers->copyOutputToHost();
+    this->buffers->copyOutputToHost();
 
     // Post-process detections and verify results
-    const float* detection = static_cast<const float*>(buffers->getHostBuffer("dense_12/BiasAdd"));
+    const float* detection = static_cast<const float*>(this->buffers->getHostBuffer("dense_12/BiasAdd"));
     const float* big5_aux = &detection[0];
     big5[0] = big5_aux[0];
     big5[1] = big5_aux[1];

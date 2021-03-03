@@ -3,7 +3,7 @@
 CnnEG::CnnEG() {
     // Variables del modelo
     string model_TRTbin = "./../bin/models/EG/TRT_cnn_EG.bin";
-    string __PATH_UFF_SAVED_MODEL = "./../bin/models/EG/cnn_EG.uff";
+    string __PATH_UFF_SAVED_MODEL = "./../bin/models/EG/frozen_graph_inference.uff";
 
     // Check if BIN exists
     struct stat s;
@@ -16,7 +16,7 @@ CnnEG::CnnEG() {
 
         // Parse UFF model
         parser->registerInput("input",
-                              nvinfer1::Dims3(__model_dims[0], __model_dims[1], __model_dims[2]),
+                              nvinfer1::Dims3(this->__model_dims[0], this->__model_dims[1], this->__model_dims[2]),
                               nvuffparser::UffInputOrder::kNCHW);
         parser->registerOutput("Identity");
         parser->registerOutput("Identity_1");
@@ -52,17 +52,17 @@ CnnEG::CnnEG() {
     nvinfer1::ICudaEngine* engine = runtime->deserializeCudaEngine(buf.data(), size, nullptr);
 
     // Create context and buffers
-    context = engine->createExecutionContext();
-    buffers = new samplesCommon::BufferManager(engine, 1);
+    this->context = engine->createExecutionContext();
+    this->buffers = new samplesCommon::BufferManager(engine, 1);
 }
 
 void CnnEG::obtenerEG(cv::Mat rostro, float* e_g) {
-    const int inputC = __model_dims[0];
-    const int inputH = __model_dims[1];
-    const int inputW = __model_dims[2];
+    const int inputC = this->__model_dims[0];
+    const int inputH = this->__model_dims[1];
+    const int inputW = this->__model_dims[2];
     const int batchSize = 1;
 
-    float* hostDataBuffer = static_cast<float*>(buffers->getHostBuffer("input"));
+    float* hostDataBuffer = static_cast<float*>(this->buffers->getHostBuffer("input"));
     // Normalize image
     for (int i = 0, volImg = inputC * inputH * inputW; i < batchSize; ++i) {
         for (int c = 0; c < inputC; ++c) {
@@ -72,15 +72,15 @@ void CnnEG::obtenerEG(cv::Mat rostro, float* e_g) {
     }
 
     // Memcpy from host input buffers to device input buffers
-    buffers->copyInputToDevice();
+    this->buffers->copyInputToDevice();
     // Run inference
-    context->execute(1, buffers->getDeviceBindings().data());
+    this->context->execute(1, this->buffers->getDeviceBindings().data());
     // Memcpy from device output buffers to host output buffers
-    buffers->copyOutputToHost();
+    this->buffers->copyOutputToHost();
 
     // Post-process detections and verify results
-    const float* detectionAge = static_cast<const float*>(buffers->getHostBuffer("Identity"));
-    const float* detectionGenre = static_cast<const float*>(buffers->getHostBuffer("Identity_1"));
+    const float* detectionAge = static_cast<const float*>(this->buffers->getHostBuffer("Identity"));
+    const float* detectionGenre = static_cast<const float*>(this->buffers->getHostBuffer("Identity_1"));
 
     const float* g = &detectionGenre[0];
     const float* edad = &detectionAge[0];
