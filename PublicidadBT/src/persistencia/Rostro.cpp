@@ -4,9 +4,6 @@ Rostro::Rostro(int id) {
 	if(id != NULL) {
 		this->__id = id;
 	}
-	else {
-		this->__id++;
-	}
 }
 // GETTERS
 int Rostro::getId() {

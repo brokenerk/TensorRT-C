@@ -123,8 +123,7 @@ void Visor::iniciar() {
 		char key = cv::waitKey(10);
         if (key == 81 or key == 113) //Metodo para salir, oprimir la letra Q
             break;
-        else if (key == 70 or key == 102) {
-        	// Pantalla Completa, oprimir la tecla F
+        else if (key == 70 or key == 102) { // Pantalla Completa, oprimir la tecla F
         	full_scrn = !full_scrn;
         	if(full_scrn)
         		cv::setWindowProperty(this->__nombreVentana, cv::WND_PROP_FULLSCREEN, cv::WINDOW_FULLSCREEN);

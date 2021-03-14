@@ -33,7 +33,10 @@ class Rostro {
 	    void setCoordenadas(int* coordenadas);
 
 	    bool operator <(const Rostro& r) const {
-	        return __id < r.__id;
+	    	cv::Mat dst;
+	    	cv::bitwise_xor(__img, r.__img, dst);
+	    	cv::cvtColor(dst, dst, cv::COLOR_RGB2GRAY);
+			return cv::countNonZero(dst) == 0;
 	    }
 	private:
 	    int __id = 0;
